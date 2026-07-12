@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import PageHeader from '../components/PageHeader';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
+import { formatCurrency } from '../lib/currency';
 import { Plus, Search, RefreshCw, CheckCircle, Pencil } from 'lucide-react';
 
 const TYPES = ['Oil Change','Tire Replacement','Brake Service','Engine Repair',
@@ -107,8 +108,8 @@ export default function MaintenancePage() {
         <select className="input w-36" value={filter.status}
           onChange={e => setFilter(p => ({ ...p, status: e.target.value }))}>
           <option value="">All Status</option>
-          <option>Active</option>
-          <option>Completed</option>
+          <option value="">In Shop</option>
+          <option value="Completed">Closed</option>
         </select>
         <button className="btn-secondary" onClick={load}><RefreshCw size={15} /></button>
       </div>
@@ -141,14 +142,13 @@ export default function MaintenancePage() {
                     </td>
                     <td className="table-cell">{r.maintenance_type}</td>
                     <td className="table-cell text-xs max-w-[150px] truncate">{r.description || '—'}</td>
-                    <td className="table-cell">${parseFloat(r.cost||0).toFixed(2)}</td>
+                    <td className="table-cell font-mono text-xs">{formatCurrency(r.cost||0)}</td>
                     <td className="table-cell text-xs">{r.scheduled_date ? new Date(r.scheduled_date).toLocaleDateString() : '—'}</td>
                     <td className="table-cell text-xs">{r.technician || '—'}</td>
                     <td className="table-cell text-xs">{r.service_center || '—'}</td>
                     <td className="table-cell"><StatusBadge status={r.status} type="maintenance" /></td>
                     <td className="table-cell">
-                      {canEdit && r.status === 'Active' && (
-                        <button className="btn btn-sm btn-success" onClick={() => openClose(r)} title="Mark Complete">
+                      {canEdit && r.status === 'Active' && (                        <button className="btn btn-sm btn-success" onClick={() => openClose(r)} title="Mark Complete">
                           <CheckCircle size={14} /> Close
                         </button>
                       )}
@@ -181,7 +181,7 @@ export default function MaintenancePage() {
             </select>
           </div>
           <div>
-            <label className="label">Estimated Cost ($)</label>
+            <label className="label">Estimated Cost (₹)</label>
             <input className="input" type="number" min="0" step="0.01" value={form.cost} onChange={f('cost')} />
           </div>
           <div className="col-span-2">
@@ -225,7 +225,7 @@ export default function MaintenancePage() {
             <input className="input" type="date" value={closeForm.completed_date} onChange={fc('completed_date')} />
           </div>
           <div>
-            <label className="label">Final Cost ($)</label>
+            <label className="label">Final Cost (₹)</label>
             <input className="input" type="number" min="0" step="0.01" value={closeForm.cost} onChange={fc('cost')} />
           </div>
           <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">

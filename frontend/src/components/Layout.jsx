@@ -1,35 +1,25 @@
-import { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import {
-  LayoutDashboard, Truck, Users, Navigation, Wrench,
-  Fuel, ReceiptText, BarChart3, LogOut, Menu, X,
-  ChevronRight, Bell
+import { 
+  LayoutDashboard, Truck, Users, Navigation, Wrench, 
+  Fuel, BarChart3, Settings, LogOut
 } from 'lucide-react';
-import clsx from 'clsx';
 
+// Navigation items with role-based visibility
 const NAV = [
-  { to: '/',           label: 'Dashboard',   icon: LayoutDashboard },
-  { to: '/vehicles',   label: 'Vehicles',     icon: Truck },
-  { to: '/drivers',    label: 'Drivers',      icon: Users },
-  { to: '/trips',      label: 'Trips',        icon: Navigation },
-  { to: '/maintenance',label: 'Maintenance',  icon: Wrench },
-  { to: '/fuel',       label: 'Fuel Logs',    icon: Fuel },
-  { to: '/expenses',   label: 'Expenses',     icon: ReceiptText },
-  { to: '/reports',    label: 'Reports',      icon: BarChart3 },
+  { to: '/',             label: 'Dashboard',      icon: LayoutDashboard, roles: ['Dispatcher'] },
+  { to: '/vehicles',     label: 'Fleet',           icon: Truck,           roles: ['Fleet Manager'] },
+  { to: '/drivers',      label: 'Drivers',         icon: Users,           roles: ['Safety Officer'] },
+  { to: '/trips',        label: 'Trips',           icon: Navigation,      roles: ['Dispatcher'] },
+  { to: '/maintenance',  label: 'Maintenance',     icon: Wrench,          roles: ['Fleet Manager'] },
+  { to: '/fuel-expenses',label: 'Fuel & Expenses', icon: Fuel,            roles: ['Financial Analyst'] },
+  { to: '/analytics',    label: 'Analytics',       icon: BarChart3,       roles: ['Financial Analyst'] },
+  { to: '/settings',     label: 'Settings',        icon: Settings,        roles: ['Fleet Manager', 'Dispatcher', 'Safety Officer', 'Financial Analyst'] },
 ];
-
-const ROLE_COLOR = {
-  'Fleet Manager':     'bg-blue-100 text-blue-700',
-  'Dispatcher':        'bg-green-100 text-green-700',
-  'Safety Officer':    'bg-amber-100 text-amber-700',
-  'Financial Analyst': 'bg-purple-100 text-purple-700',
-};
 
 export default function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -37,104 +27,61 @@ export default function Layout() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
-      {/* Mobile overlay */}
-      {open && (
-        <div className="fixed inset-0 z-20 bg-black/40 lg:hidden" onClick={() => setOpen(false)} />
-      )}
-
+    <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className={clsx(
-        'fixed inset-y-0 left-0 z-30 w-64 flex flex-col bg-gray-900 text-white transition-transform duration-300',
-        'lg:static lg:translate-x-0',
-        open ? 'translate-x-0' : '-translate-x-full'
-      )}>
+      <aside className="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col">
         {/* Logo */}
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-700">
-          <div className="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center">
-            <Truck size={20} />
+        <div className="h-16 flex items-center gap-3 px-6 border-b border-gray-200">
+          <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white">
+            <Truck size={18} />
           </div>
-          <div>
-            <p className="font-bold text-white leading-tight">TransitOps</p>
-            <p className="text-xs text-gray-400">Smart Transport</p>
-          </div>
-          <button className="ml-auto lg:hidden" onClick={() => setOpen(false)}>
-            <X size={18} className="text-gray-400" />
-          </button>
+          <span className="text-lg font-bold text-gray-900">TransitOps</span>
         </div>
 
-        {/* Nav links */}
+        {/* Nav links — filtered by role */}
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
-          {NAV.map(({ to, label, icon: Icon }) => (
+          {NAV.filter(item => !item.roles || item.roles.includes(user?.role)).map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
-              end={to === '/'}
-              onClick={() => setOpen(false)}
-              className={({ isActive }) => clsx(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-primary-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              )}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-primary-50 text-primary-700'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`
+              }
             >
               <Icon size={18} />
-              {label}
+              <span>{label}</span>
             </NavLink>
           ))}
         </nav>
 
-        {/* User info */}
-        <div className="border-t border-gray-700 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-primary-600 flex items-center justify-center font-bold text-sm">
-              {user?.name?.[0]?.toUpperCase()}
+        {/* User info + logout */}
+        <div className="p-4 border-t border-gray-200">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-semibold">
+              {user?.name?.charAt(0) || 'U'}
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-white truncate">{user?.name}</p>
-              <span className={clsx('badge text-xs', ROLE_COLOR[user?.role] || 'bg-gray-700 text-gray-300')}>
-                {user?.role}
-              </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
+              <p className="text-xs text-gray-500 truncate">{user?.role}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="mt-3 w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+            className="btn-ghost w-full justify-start"
           >
-            <LogOut size={16} />
-            Sign out
+            <LogOut size={18} />
+            <span>Sign out</span>
           </button>
         </div>
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Topbar */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center px-4 lg:px-6 gap-4 flex-shrink-0">
-          <button
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
-            onClick={() => setOpen(true)}
-          >
-            <Menu size={20} />
-          </button>
-
-          {/* Breadcrumb placeholder */}
-          <div className="flex-1" />
-
-          <button className="relative p-2 rounded-lg hover:bg-gray-100 text-gray-500">
-            <Bell size={20} />
-          </button>
-
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold text-sm">
-              {user?.name?.[0]?.toUpperCase()}
-            </div>
-            <span className="hidden sm:block text-sm font-medium text-gray-700">{user?.name}</span>
-          </div>
-        </header>
-
-        {/* Page body */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+      <div className="pl-64">
+        <main className="p-8">
           <Outlet />
         </main>
       </div>

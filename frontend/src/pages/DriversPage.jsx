@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'; 
+import { useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
@@ -124,14 +124,14 @@ export default function DriversPage() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  {['Name','License #','Category','Expiry','Contact','Safety Score','Status','Actions'].map(h => (
+                  {['Name','License #','Category','Expiry','Contact','Safety Score','Success Rate','Status','Actions'].map(h => (
                     <th key={h} className="table-head">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {drivers.length === 0 && (
-                  <tr><td colSpan={8} className="text-center text-gray-400 py-12 text-sm">No drivers found</td></tr>
+                  <tr><td colSpan={9} className="text-center text-gray-400 py-12 text-sm">No drivers found</td></tr>
                 )}
                 {drivers.map(d => {
                   const expired     = d.license_expired;
@@ -159,6 +159,48 @@ export default function DriversPage() {
                           </div>
                           <span className="text-xs font-medium">{d.safety_score}</span>
                         </div>
+                      </td>
+                      <td className="table-cell">
+                        {(() => {
+                          const rate = d.success_rate != null ? parseFloat(d.success_rate) : null;
+                          const total = parseInt(d.total_trips) || 0;
+                          const completed = parseInt(d.completed_trips) || 0;
+                          const cancelled = parseInt(d.cancelled_trips) || 0;
+
+                          if (total === 0) {
+                            return (
+                              <span className="text-xs text-gray-400 italic">No trips</span>
+                            );
+                          }
+
+                          const color =
+                            rate >= 80 ? 'bg-green-500' :
+                            rate >= 50 ? 'bg-amber-500' :
+                                         'bg-red-500';
+                          const textColor =
+                            rate >= 80 ? 'text-green-700' :
+                            rate >= 50 ? 'text-amber-600' :
+                                         'text-red-600';
+
+                          return (
+                            <div className="flex flex-col gap-0.5 min-w-[90px]">
+                              <div className="flex items-center justify-between">
+                                <span className={`text-xs font-bold ${textColor}`}>
+                                  {rate != null ? `${rate}%` : '—'}
+                                </span>
+                                <span className="text-xs text-gray-400">
+                                  {completed}/{completed + cancelled}
+                                </span>
+                              </div>
+                              <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full ${color} transition-all`}
+                                  style={{ width: `${rate ?? 0}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="table-cell"><StatusBadge status={d.status} type="driver" /></td>
                       <td className="table-cell">
@@ -249,6 +291,10 @@ export default function DriversPage() {
                 ['Safety Score', detail.driver?.safety_score],
                 ['Contact', detail.driver?.contact_number || '—'],
                 ['Email', detail.driver?.email || '—'],
+                ['Total Trips', detail.driver?.total_trips ?? '—'],
+                ['Completed', detail.driver?.completed_trips ?? '—'],
+                ['Cancelled', detail.driver?.cancelled_trips ?? '—'],
+                ['Success Rate', detail.driver?.success_rate != null ? `${detail.driver.success_rate}%` : 'No trips'],
               ].map(([k, v]) => (
                 <div key={k} className="bg-gray-50 rounded-lg p-3">
                   <p className="text-xs text-gray-500 mb-0.5">{k}</p>

@@ -3,14 +3,15 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
+import SignUpPage from './pages/SignUpPage';
 import DashboardPage from './pages/DashboardPage';
 import VehiclesPage from './pages/VehiclesPage';
 import DriversPage from './pages/DriversPage';
 import TripsPage from './pages/TripsPage';
 import MaintenancePage from './pages/MaintenancePage';
-import FuelPage from './pages/FuelPage';
-import ExpensesPage from './pages/ExpensesPage';
-import ReportsPage from './pages/ReportsPage';
+import FuelExpensesPage from './pages/FuelExpensesPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import SettingsPage from './pages/SettingsPage';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -32,15 +33,20 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+      <Route path="/signup" element={<PublicRoute><SignUpPage /></PublicRoute>} />
       <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
-        <Route path="/"            element={<DashboardPage />} />
-        <Route path="/vehicles"    element={<VehiclesPage />} />
-        <Route path="/drivers"     element={<DriversPage />} />
-        <Route path="/trips"       element={<TripsPage />} />
-        <Route path="/maintenance" element={<MaintenancePage />} />
-        <Route path="/fuel"        element={<FuelPage />} />
-        <Route path="/expenses"    element={<ExpensesPage />} />
-        <Route path="/reports"     element={<ReportsPage />} />
+        <Route path="/"              element={<DashboardPage />} />
+        <Route path="/vehicles"      element={<VehiclesPage />} />
+        <Route path="/drivers"       element={<DriversPage />} />
+        <Route path="/trips"         element={<TripsPage />} />
+        <Route path="/maintenance"   element={<MaintenancePage />} />
+        <Route path="/fuel-expenses" element={<FuelExpensesPage />} />
+        <Route path="/analytics"     element={<AnalyticsPage />} />
+        <Route path="/settings"      element={<SettingsPage />} />
+        {/* Legacy redirects so any saved bookmarks still work */}
+        <Route path="/fuel"          element={<Navigate to="/fuel-expenses" replace />} />
+        <Route path="/expenses"      element={<Navigate to="/fuel-expenses" replace />} />
+        <Route path="/reports"       element={<Navigate to="/analytics" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -54,10 +60,7 @@ export default function App() {
         <AppRoutes />
         <Toaster
           position="top-right"
-          toastOptions={{
-            duration: 3500,
-            style: { fontSize: '14px' }
-          }}
+          toastOptions={{ duration: 3500, style: { fontSize: '14px' } }}
         />
       </AuthProvider>
     </BrowserRouter>

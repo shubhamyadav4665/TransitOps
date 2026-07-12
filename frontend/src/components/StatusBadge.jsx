@@ -1,38 +1,37 @@
-import clsx from 'clsx';
+export default function StatusBadge({ status, context = 'trip' }) {
+  // Map DB values to display labels and styles
+  const getConfig = () => {
+    if (context === 'maintenance') {
+      const map = {
+        'Scheduled':  { label: 'Scheduled',  classes: 'badge badge-info' },
+        'Active':     { label: 'In Shop',    classes: 'badge badge-warning' },
+        'Completed':  { label: 'Closed',     classes: 'badge badge-success' },
+      };
+      return map[status] || { label: status, classes: 'badge bg-gray-100 text-gray-700' };
+    }
 
-const VEHICLE_STATUS = {
-  'Available': 'bg-green-100 text-green-700',
-  'On Trip':   'bg-blue-100 text-blue-700',
-  'In Shop':   'bg-amber-100 text-amber-700',
-  'Retired':   'bg-gray-100 text-gray-500',
-};
+    if (context === 'driver') {
+      const map = {
+        'Available': { label: 'Available', classes: 'badge badge-success' },
+        'On Trip':   { label: 'On Trip',   classes: 'badge badge-info' },
+        'Off Duty':  { label: 'Off Duty',  classes: 'badge bg-gray-100 text-gray-700' },
+        'Suspended': { label: 'Suspended', classes: 'badge badge-danger' },
+      };
+      return map[status] || { label: status, classes: 'badge bg-gray-100 text-gray-700' };
+    }
 
-const DRIVER_STATUS = {
-  'Available': 'bg-green-100 text-green-700',
-  'On Trip':   'bg-blue-100 text-blue-700',
-  'Off Duty':  'bg-gray-100 text-gray-500',
-  'Suspended': 'bg-red-100 text-red-700',
-};
+    // Trip context
+    const map = {
+      'Planned':    { label: 'Planned',    classes: 'badge badge-info' },
+      'Dispatched': { label: 'Dispatched', classes: 'badge badge-warning' },
+      'In Transit': { label: 'In Transit', classes: 'badge badge-primary' },
+      'Completed':  { label: 'Completed',  classes: 'badge badge-success' },
+      'Cancelled':  { label: 'Cancelled',  classes: 'badge badge-danger' },
+    };
+    return map[status] || { label: status, classes: 'badge bg-gray-100 text-gray-700' };
+  };
 
-const TRIP_STATUS = {
-  'Draft':      'bg-gray-100 text-gray-600',
-  'Dispatched': 'bg-blue-100 text-blue-700',
-  'Completed':  'bg-green-100 text-green-700',
-  'Cancelled':  'bg-red-100 text-red-600',
-};
+  const { label, classes } = getConfig();
 
-const MAINT_STATUS = {
-  'Active':    'bg-amber-100 text-amber-700',
-  'Completed': 'bg-green-100 text-green-700',
-};
-
-const MAP = { vehicle: VEHICLE_STATUS, driver: DRIVER_STATUS, trip: TRIP_STATUS, maintenance: MAINT_STATUS };
-
-export default function StatusBadge({ status, type = 'vehicle' }) {
-  const color = MAP[type]?.[status] || 'bg-gray-100 text-gray-600';
-  return (
-    <span className={clsx('badge', color)}>
-      {status}
-    </span>
-  );
+  return <span className={classes}>{label}</span>;
 }

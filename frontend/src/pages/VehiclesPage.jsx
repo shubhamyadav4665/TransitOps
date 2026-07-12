@@ -6,6 +6,7 @@ import PageHeader from '../components/PageHeader';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
+import { formatCurrency } from '../lib/currency';
 import { Plus, Search, Pencil, Trash2, Eye, RefreshCw } from 'lucide-react';
 
 const TYPES    = ['Truck', 'Van', 'Bus', 'Pickup', 'Tanker', 'Trailer', 'Other'];
@@ -22,7 +23,7 @@ export default function VehiclesPage() {
   const canEdit                = hasRole('Fleet Manager');
   const [vehicles, setVehicles]= useState([]);
   const [loading, setLoading]  = useState(true);
-  const [filter, setFilter]    = useState({ status: '', type: '', region: '', search: '' });
+  const [filter, setFilter]    = useState({ status: '', type: '', region: '', search: '', registration_number: '' });
   const [modal, setModal]      = useState({ type: null, data: null });
   const [form, setForm]        = useState(EMPTY);
   const [saving, setSaving]    = useState(false);
@@ -30,9 +31,19 @@ export default function VehiclesPage() {
 
   const load = useCallback(() => {
     setLoading(true);
-    const params = Object.fromEntries(Object.entries(filter).filter(([, v]) => v));
+    // Send status/type/region/search to backend; reg filter applied client-side below
+    const { registration_number, ...apiParams } = filter;
+    const params = Object.fromEntries(Object.entries(apiParams).filter(([, v]) => v));
     api.get('/vehicles', { params })
-      .then(r => setVehicles(r.data.vehicles))
+      .then(r => {
+        let rows = r.data.vehicles;
+        // Client-side reg number filter (case-insensitive partial match)
+        if (registration_number && registration_number.trim()) {
+          const q = registration_number.trim().toLowerCase();
+          rows = rows.filter(v => v.registration_number?.toLowerCase().includes(q));
+        }
+        setVehicles(rows);
+      })
       .catch(() => toast.error('Failed to load vehicles'))
       .finally(() => setLoading(false));
   }, [filter]);
@@ -102,8 +113,13 @@ export default function VehiclesPage() {
       <div className="card p-4 mb-5 flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[160px]">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input className="input pl-9" placeholder="Search…" value={filter.search}
+          <input className="input pl-9" placeholder="Search by name or model…" value={filter.search}
             onChange={e => setFilter(p => ({ ...p, search: e.target.value }))} />
+        </div>
+        <div className="relative min-w-[160px]">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input className="input pl-9" placeholder="Filter by Reg. No. (e.g. TRK-001)" value={filter.registration_number}
+            onChange={e => setFilter(p => ({ ...p, registration_number: e.target.value }))} />
         </div>
         <select className="input w-36" value={filter.status}
           onChange={e => setFilter(p => ({ ...p, status: e.target.value }))}>
@@ -150,7 +166,7 @@ export default function VehiclesPage() {
                     <td className="table-cell">{v.type}</td>
                     <td className="table-cell">{parseFloat(v.max_load_capacity).toLocaleString()} kg</td>
                     <td className="table-cell">{parseFloat(v.odometer).toLocaleString()} km</td>
-                    <td className="table-cell">${parseFloat(v.acquisition_cost).toLocaleString()}</td>
+                    <td className="table-cell font-mono text-xs">{formatCurrency(v.acquisition_cost)}</td>
                     <td className="table-cell text-xs">{v.region || '—'}</td>
                     <td className="table-cell"><StatusBadge status={v.status} type="vehicle" /></td>
                     <td className="table-cell">
@@ -253,9 +269,9 @@ export default function VehiclesPage() {
                 ['Status', <StatusBadge status={detail.vehicle?.status} type="vehicle" />],
                 ['Max Load', `${parseFloat(detail.vehicle?.max_load_capacity||0).toLocaleString()} kg`],
                 ['Odometer', `${parseFloat(detail.vehicle?.odometer||0).toLocaleString()} km`],
-                ['Acquisition Cost', `$${parseFloat(detail.vehicle?.acquisition_cost||0).toLocaleString()}`],
-                ['Total Fuel Cost', `$${parseFloat(detail.vehicle?.total_fuel_cost||0).toFixed(2)}`],
-                ['Total Maintenance', `$${parseFloat(detail.vehicle?.total_maintenance_cost||0).toFixed(2)}`],
+                ['Acquisition Cost', formatCurrency(detail.vehicle?.acquisition_cost||0)],
+                ['Total Fuel Cost', formatCurrency(detail.vehicle?.total_fuel_cost||0)],
+                ['Total Maintenance', formatCurrency(detail.vehicle?.total_maintenance_cost||0)],
                 ['Region', detail.vehicle?.region || '—'],
                 ['Year', detail.vehicle?.year || '—'],
               ].map(([k, v]) => (

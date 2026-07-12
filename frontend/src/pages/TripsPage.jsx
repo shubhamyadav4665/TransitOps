@@ -6,6 +6,7 @@ import PageHeader from '../components/PageHeader';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
+import { formatCurrency } from '../lib/currency';
 import { Plus, Search, RefreshCw, Play, CheckCircle, XCircle, Eye } from 'lucide-react';
 
 const STATUSES = ['Draft', 'Dispatched', 'Completed', 'Cancelled'];
@@ -180,7 +181,7 @@ export default function TripsPage() {
                       {t.actual_distance ? `${parseFloat(t.actual_distance).toLocaleString()} km` :
                         t.planned_distance ? `${parseFloat(t.planned_distance).toLocaleString()} km (plan)` : '—'}
                     </td>
-                    <td className="table-cell text-xs">${parseFloat(t.revenue||0).toLocaleString()}</td>
+                    <td className="table-cell font-mono text-xs">{formatCurrency(t.revenue||0)}</td>
                     <td className="table-cell"><StatusBadge status={t.status} type="trip" /></td>
                     <td className="table-cell">
                       <div className="flex items-center gap-1">
@@ -272,7 +273,7 @@ export default function TripsPage() {
               <input className="input" type="number" min="0" step="0.1" value={form.planned_distance} onChange={f('planned_distance')} />
             </div>
             <div>
-              <label className="label">Expected Revenue ($)</label>
+              <label className="label">Expected Revenue (₹)</label>
               <input className="input" type="number" min="0" step="0.01" value={form.revenue} onChange={f('revenue')} />
             </div>
           </div>
@@ -309,7 +310,7 @@ export default function TripsPage() {
               value={completeForm.fuel_consumed} onChange={fc('fuel_consumed')} />
           </div>
           <div>
-            <label className="label">Actual Revenue ($)</label>
+            <label className="label">Actual Revenue (₹)</label>
             <input className="input" type="number" min="0" step="0.01"
               value={completeForm.revenue} onChange={fc('revenue')} />
           </div>
@@ -337,7 +338,7 @@ export default function TripsPage() {
                 ['Planned Dist',  detail.trip?.planned_distance ? `${detail.trip.planned_distance} km` : '—'],
                 ['Actual Dist',   detail.trip?.actual_distance  ? `${detail.trip.actual_distance} km`  : '—'],
                 ['Fuel Consumed', detail.trip?.fuel_consumed    ? `${detail.trip.fuel_consumed} L`     : '—'],
-                ['Revenue',       `$${parseFloat(detail.trip?.revenue||0).toFixed(2)}`],
+                ['Revenue',       formatCurrency(detail.trip?.revenue||0)],
                 ['Start Odometer',detail.trip?.start_odometer ? `${detail.trip.start_odometer} km` : '—'],
                 ['End Odometer',  detail.trip?.end_odometer   ? `${detail.trip.end_odometer} km`   : '—'],
                 ['Dispatched At', detail.trip?.dispatched_at  ? new Date(detail.trip.dispatched_at).toLocaleString() : '—'],
